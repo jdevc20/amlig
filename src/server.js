@@ -1,21 +1,34 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-
-// Validate required environment variables
-if (!process.env.PORT) {
-    console.error("⚠️ Missing PORT in .env file");
-    process.exit(1);
-}
+const session = require("express-session");
+const passport = require("./config/passport");
+const authRoutes = require("./routes/auth.routes");
+const userRoutes = require("./routes/user.routes")
+const connectDB = require("./config/db"); // Import DB connection
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Parse JSON requests
+// Connect to database
+connectDB();
 
-// Sample route
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || "BatchoyNgaMayPuto",
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+
 app.get("/", (req, res) => {
     res.json({ message: "🚀 Server is running!" });
 });
@@ -39,7 +52,6 @@ app.use((err, req, res, next) => {
         },
     });
 });
-
 
 // Start server
 app.listen(PORT, () => {
